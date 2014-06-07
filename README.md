@@ -122,8 +122,8 @@ automatically. Internally, it creates a duplicate (like `strdup`) of your messag
 message size is 2048, but you can change it by defining `EXCEPTION_MAX_MESSAGE_SIZE`.
 Exceptional C Exceptions will free the generated string automatically.
 
-Inside a `catch` code block, you can `rethrow` variants instead of `throw`, specifying
-the caught exception as a "cause":
+Inside a `catch` code block, you can use `rethrow` variants instead of `throw`,
+specifying the caught exception as a "cause":
 
 		catch (Authorization, e)
 			rethrowf(e, IO, "could not access file: %s", filename);
