@@ -325,8 +325,6 @@ that code block, but execution will continue:
 				throwf(Value, "bad number in loop %d", i);
 		printf("This will be printed out even if an exception is thrown above\n");
 
-TODO: verify this?
-
 If you've been paying attention, you'll notice that actually more than exception is
 thrown and captured in the above parallel code. Though the try/catch semantics are
 designed for a single exception only (in our case it is the first one thrown, which
@@ -336,6 +334,8 @@ remaining exceptions.
 Actually, this mechanism introduces an interesting side effect, which seems to break
 the familiar `catch` semantics: because more than one exception was thrown, multiple
 `catch` code blocks might end up executing:
+
+TODO: verify this?
 
 		with_exceptions (openmp) {
 			try {
