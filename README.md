@@ -103,7 +103,13 @@ exception information: it supports `EXCEPTION_DUMP_SHORT`,
 `EXCEPTION_DUMP_LONG`, and `EXCEPTION_DUMP_NESTED`. You can also access this
 information directly:
 
-		printf("%s: %s\n%s\nAt %s:%d %s()\n", e->type->name, e->type->description, e->message, e->location.file, e->location.line, e->location.fn);
+		printf("%s: %s\n%s\nAt %s:%d %s()\n",
+			e->type->name,
+			e->type->description,
+			e->message,
+			e->location.file,
+			e->location.line,
+			e->location.fn);
 
 #### Throwing
 
@@ -246,7 +252,7 @@ functions with a special decorator:
 			try
 				printf("10 / 0 = %d", divide CALL_WITH_EXCEPTIONS (10, 0));
 			finally catch (Exception, e)
-				printf("%s: %s %s:%d %s()\n", e->type->name, e->message, e->location.file, e->location.line, e->location.fn);
+				Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
 		}
 
 Note that if your function has no arguments, you must use `WITH_EXCEPTIONS_VOID`
@@ -298,10 +304,10 @@ some threads might fail, while others succeed. For this, we introduce the powerf
 				throw_captured();
 			}
 			finally catch (Exception, e) {
-				printf("%s: %s at %s:%d %s()\n", e->type->name, e->message, e->location.file, e->location.line, e->location.fn);
+				Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
 				for (int i = 0, l = exception_count(); i < l, i++) {
 					Exception *ee = get_exception(i);
-					printf("also, %s: %s at %s:%d %s()\n", ee->type->name, ee->message, ee->location.file, ee->location.line, ee->location.fn);
+					Exception_dump(ee, stdout, EXCEPTION_DUMP_NESTED);
 				}
 			}
 		}
@@ -344,10 +350,14 @@ the familiar `catch` semantics: because more than one exception was thrown, mult
 				throw_captured();
 			}
 			finally {
-				catch (Value, e)
-					printf("first catch, %s: %s %s:%d %s()\n", e->type->name, e->message, e->location.file, e->location.line, e->location.fn);
-				catch (IO, e)
-					printf("second catch, %s: %s %s:%d %s()\n", e->type->name, e->message, e->location.file, e->location.line, e->location.fn);
+				catch (Value, e) {
+					printf("first catch ");
+					Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
+				}
+				catch (IO, e) {
+					printf("second catch ");
+					Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
+				}
 			}
 		}
 
@@ -380,7 +390,7 @@ You can also use one context inside another, via `with_exceptions_relay`:
 					}
 				}
 				finally catch (Exception, e)
-					printf("%s: %s %s:%d %s()\n", e->type->name, e->message, e->location.file, e->location.line, e->location.fn);
+					Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
 			}
 			return 0;
 		}
