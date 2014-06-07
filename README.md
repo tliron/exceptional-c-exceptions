@@ -3,7 +3,7 @@ Exceptional C Exceptions
 
 Yet another try/throw/catch/finally library for C! (for C99, actually)
 
-Currently in beta (as of June 7, 2014).
+_Currently in beta and not recommended for production use (as of June 7, 2014)._
 
 What makes this library "exceptional" is its intrinsic and exceptionally flexible
 support for multi-threaded environments, with built in support for POSIX thread
@@ -92,6 +92,11 @@ You can even write things like this if you don't have any finally-executing code
 				throw(Exception, "oops");
 			finally catch (Exception, e)
 				Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
+
+And this:
+
+			try throw(Exception, "oops");
+			finally printf("we're done here\n");
 
 That said, note that some keywords are _not_ themselves single lines of code: `try`,
 `with_exceptions`, `with_exceptions_relay`, `with_exceptions_relay_to`, and
@@ -244,8 +249,9 @@ first argument of the function:
 			return x / y;
 		}
 
-That's not too bad, is it? And it even takes fewer lines than when specifying a
-`with_exceptions` code block. Well, unfortunately we also need to call such
+That's not too bad, is it? The requirement is similar to that for checked
+exceptions in other languages. And it even takes fewer lines than when specifying
+a `with_exceptions` code block. Well, unfortunately we also need to call such
 functions with a special decorator:
 
 		with_exceptions (posix) {
@@ -259,9 +265,9 @@ Note that if your function has no arguments, you must use `WITH_EXCEPTIONS_VOID`
 and `CALL_WITH_EXCEPTIONS_VOID` variants. This is due to limitations of C macros.
 
 We don't think this function decorator stuff is too awful, but it definitely is a
-little strange. The good thing about this requirement is that the compiler will notify
-you if you're calling such functions without `CALL_WITH_EXCEPTIONS`. You will also
-get an error if you try to use `throw` in a function that doesn't have
+little strange. The good thing about this requirement is that the compiler will
+notify you if you're calling such functions without `CALL_WITH_EXCEPTIONS`. You will
+also get an error if you try to use `throw` in a function that doesn't have
 `WITH_EXCEPTIONS` (or not in a `with_exceptions` section). This ensures that the
 semantics are always adhered to.
 
@@ -303,39 +309,21 @@ some threads might fail, while others succeed. For this, we introduce the powerf
 				}
 				throw_captured();
 			}
-			finally catch (Exception, e) {
+			finally catch (Exception, e)
 				Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
-				for (int i = 0, l = exception_count(); i < l, i++) {
-					Exception *ee = get_exception(i);
-					Exception_dump(ee, stdout, EXCEPTION_DUMP_NESTED);
-				}
-			}
 		}
 
-All uncaught exceptions thrown in the `capture_exceptions` code black are stored in
-a waiting area within the current scope. Then, when we call `throw_captured`, any
-such waiting exceptions are thrown, as if by calling `rethrow` on them. If there are
-no waiting exceptions, the call will do nothing.
+Uncaught exceptions thrown in the `capture_exceptions` code block are stored in a
+waiting area within the current scope. Then, when we call `throw_captured`, the first
+waiting exception is thrown, as if by calling `rethrow` on it. The rest of the
+exceptions are discarded. If there are no waiting exceptions, `throw_captured` will do
+nothing.
 
-Note that this means that exceptions thrown within a `capture_exceptions` exit _only_
-that code block, but execution will continue: 
-
-		capture_exceptions
-			if (i % 3 == 0)
-				throwf(Value, "bad number in loop %d", i);
-		printf("This will be printed out even if an exception is thrown above\n");
-
-If you've been paying attention, you'll notice that actually more than exception is
-thrown and captured in the above parallel code. Though the try/catch semantics are
-designed for a single exception only (in our case it is the first one thrown, which
-in OpenMP may happen n an arbitrary order), we provide an API to access all the
-remaining exceptions. 
-
-Actually, this mechanism introduces an interesting side effect, which seems to break
-the familiar `catch` semantics: because more than one exception was thrown, multiple
-`catch` code blocks might end up executing:
-
-TODO: verify this?
+We must discard the rest of the exceptions in order to adhere to the try/catch
+semantics, which only allow a single exception to unwind at once. However, it can
+sometimes be useful to know about _all_ the exceptions thrown in the parallel
+code. You can manually traverse these exceptions before calling `throw_captured` by
+calling `uncapture_exceptions`:
 
 		with_exceptions (openmp) {
 			try {
@@ -344,32 +332,18 @@ TODO: verify this?
 					capture_exceptions
 						if (i % 3 == 0)
 							throwf(Value, "bad number in loop %d", i);
-						else if (i % 4 == 0)
-							throwf(IO, "bad number in loop %d", i);
+				}
+				uncapture_exceptions();
+				printf("All these were thrown:\n");
+				for (int i = 0, l = exception_count(); i < l, i++) {
+					Exception *e = get_exception(i);
+					Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
 				}
 				throw_captured();
 			}
-			finally {
-				catch (Value, e) {
-					printf("first catch ");
-					Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
-				}
-				catch (IO, e) {
-					printf("second catch ");
-					Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
-				}
-			}
+			finally catch (Exception, e)
+				Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
 		}
-
-In this case, both "first catch" and "second catch" will be printed! This can lead
-to undesired behavior, for example if you free resources in each "catch", it may
-cause free to be called twice. This is especially dangerous if you are relaying
-(see below) to another context, which may not expect this behavior.
-
-Thus, we introduce `throw_first_captured` which will adhere to the familiar semantics
-semantics. Though if you use it, note that all other exceptions after the first will
-will be discarded. Also note that which exception was thrown first is quite impossible
-to predict in parallel code. 
 
 #### Relaying
 
@@ -386,7 +360,6 @@ You can also use one context inside another, via `with_exceptions_relay`:
 									throwf(Value, "bad number in loop %d", i);
 							}
 						}
-						throw_captured();
 					}
 				}
 				finally catch (Exception, e)
@@ -396,7 +369,8 @@ You can also use one context inside another, via `with_exceptions_relay`:
 		}
 
 At the end of the `with_exceptions_relay` code block, any exceptions uncaught there
-will be thrown in the containing (`sdl`, in this example) context.
+will be automatically thrown into the containing context (`sdl`, in this example),
+so you don't have to call `throw_captured`.
 
 If you just need a code block to relay from one context to another, you can use the
 `with_exceptions_relay_to` shortcut (it's also a bit more efficient):
@@ -408,7 +382,6 @@ If you just need a code block to relay from one context to another, you can use 
 					capture_exceptions
 						if (i % 3 == 0)
 							throwf(Value, "bad number in loop %d", i);
-				throw_captured();
 			}
 			return 0;
 		}

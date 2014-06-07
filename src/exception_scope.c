@@ -37,26 +37,10 @@ void ExceptionScope_move_exceptions_from_context(ExceptionScope *self) {
 	}
 }
 
-void ExceptionScope_move_exceptions_to_context(ExceptionScope *self, bool only_first) {
+void ExceptionScope_move_exceptions_to_context(ExceptionScope *self) {
+	// Move all captured exceptions from scope to context
 	ExceptionContext *context = self->get(self);
-	if (!list_empty(&self->captured_exceptions)) {
-		if (only_first) {
-			Exception *exception = list_fetch(&self->captured_exceptions);
-			if (exception) {
-				// Move first captured exception from scope to context
-				list_append(&context->exceptions, exception);
-
-				// Discard the rest
-				exceptional_list_for_each (&self->captured_exceptions, Exception, exception)
-					Exception_destroy_and_free(exception);
-				list_clear(&self->captured_exceptions);
-			}
-		}
-		else {
-			// Move all captured exceptions from scope to context
-			exceptional_list_move(&self->captured_exceptions, &context->exceptions);
-		}
-	}
+	exceptional_list_move(&self->captured_exceptions, &context->exceptions);
 }
 
 void ExceptionScope_dump_captured_exceptions(ExceptionScope *self, FILE *file) {
@@ -106,6 +90,7 @@ bool ExceptionScope_with_exceptions_relay(ExceptionScope *self, ExceptionScope *
 
 void ExceptionScope_with_exceptions_relay_done(ExceptionScope *self, ExceptionScope *relay) {
 	ExceptionContext *context = self->get(self);
+	ExceptionContext *relay_context = relay->get(relay);
 
 	if (exceptional_debug) {
 		fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s:\n" ANSI_COLOR_RESET, __FUNCTION__);
@@ -114,9 +99,15 @@ void ExceptionScope_with_exceptions_relay_done(ExceptionScope *self, ExceptionSc
 	}
 
 	ExceptionContext_pop_frame(context);
+	ExceptionScope_move_exceptions_to_context(self); // uncapture
 	ExceptionScope_move_exceptions_to_other_context(self, relay);
 	ExceptionScope_destroy(self);
 	ExceptionScope_destroy(relay);
+
+	if (ExceptionContext_has_exceptions(relay_context)) {
+		ExceptionContext_clear_exceptions(context, true);
+		ExceptionContext_jump_because(relay_context, JUMP_REASON_THROW);
+	}
 }
 
 bool ExceptionScope_capture_exceptions(ExceptionScope *self, jmp_buf *jmp, JumpReason reason, const char *file, int line, const char *fn) {
@@ -150,8 +141,19 @@ bool ExceptionScope_capture_exceptions(ExceptionScope *self, jmp_buf *jmp, JumpR
 	}
 }
 
-void ExceptionScope_throw_captured(ExceptionScope *self) {
-	ExceptionScope_move_exceptions_to_context(self, false);
+void ExceptionScope_uncapture_exceptions(ExceptionScope *self) {
+	ExceptionScope_move_exceptions_to_context(self);
+
+	if (exceptional_debug) {
+		fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s:\n" ANSI_COLOR_RESET, __FUNCTION__);
+		ExceptionContext *context = self->get(self);
+		ExceptionContext_dump_exceptions(context, exceptional_debug);
+		ExceptionContext_dump_frames(context, exceptional_debug);
+	}
+}
+
+void ExceptionScope_throw_captured(ExceptionScope *self, bool only_first) {
+	ExceptionScope_move_exceptions_to_context(self);
 
 	ExceptionContext *context = self->get(self);
 
@@ -164,32 +166,8 @@ void ExceptionScope_throw_captured(ExceptionScope *self) {
 			ExceptionContext_dump_frames(context, exceptional_debug);
 		}
 
-		ExceptionFrame *frame = ExceptionContext_get_current_frame(context);
-		if (frame && frame->rethrowing)
-			ExceptionContext_jump_because(context, JUMP_REASON_RETHROW);
-		else
-			ExceptionContext_jump_because(context, JUMP_REASON_THROW);
-	}
-	else if (exceptional_debug) {
-		fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s\n" ANSI_COLOR_RESET, __FUNCTION__);
-		ExceptionContext_dump_exceptions(context, exceptional_debug);
-		ExceptionContext_dump_frames(context, exceptional_debug);
-	}
-}
-
-void ExceptionScope_throw_first_captured(ExceptionScope *self) {
-	ExceptionScope_move_exceptions_to_context(self, true);
-
-	ExceptionContext *context = self->get(self);
-
-	if (ExceptionContext_has_exceptions(context)) {
-		// We have exceptions (well, at most one), so throw
-
-		if (exceptional_debug) {
-			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s:\n" ANSI_COLOR_RESET, __FUNCTION__);
-			ExceptionContext_dump_exceptions(context, exceptional_debug);
-			ExceptionContext_dump_frames(context, exceptional_debug);
-		}
+		if (only_first)
+			ExceptionContext_clear_exceptions(context, true);
 
 		ExceptionFrame *frame = ExceptionContext_get_current_frame(context);
 		if (frame && frame->rethrowing)

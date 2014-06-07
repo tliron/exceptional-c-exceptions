@@ -28,7 +28,6 @@ static void *mythread2(void *data) {
 						printf("loop %d was OK in pthread %lu\n", i, pthread_self());
 					}
 				}
-				throw_first_captured();
 			}
 		}
 		finally catch (Exception, e)
@@ -108,7 +107,7 @@ int main(int argc, char *argv[]) {
 		printf(ANSI_COLOR_BRIGHT_GREEN "Using an OpenMP exception context...\n" ANSI_COLOR_RESET);
 		printf("\n");
 
-		printf(ANSI_COLOR_BRIGHT_GREEN "Capturing one exception:\n" ANSI_COLOR_RESET);
+		printf(ANSI_COLOR_BRIGHT_GREEN "Capturing exceptions:\n" ANSI_COLOR_RESET);
 		try {
 			#pragma omp parallel for
 			for (int i = 0; i < 10; i++) {
@@ -118,28 +117,16 @@ int main(int argc, char *argv[]) {
 					printf("loop %d was OK\n", i);
 				}
 			}
-			throw_first_captured();
-		}
-		finally catch (Exception, e)
-			Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
-
-		printf(ANSI_COLOR_BRIGHT_GREEN "Capturing all exceptions:\n" ANSI_COLOR_RESET);
-		try {
-			#pragma omp parallel for
-			for (int i = 0; i < 10; i++) {
-				capture_exceptions {
-					if (i % 2 == 0)
-						throwf(Value, "oops 8 in loop %d", i);
-					printf("loop %d was OK\n", i);
-				}
+			uncapture_exceptions();
+			printf("All exceptions:\n");
+			for (int i = 0, l = exception_count(); i < l; i++) {
+				printf("  ");
+				Exception_dump(get_exception(i), stdout, EXCEPTION_DUMP_NESTED);
 			}
 			throw_captured();
 		}
 		finally catch (Exception, e)
 			Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
-		printf("Uncaught exceptions:\n");
-		for (int i = 0, l = exception_count(); i < l; i++)
-			Exception_dump(get_exception(i), stdout, EXCEPTION_DUMP_NESTED);
 	}
 
 	printf("\n");

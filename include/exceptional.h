@@ -216,7 +216,14 @@ extern FILE *exceptional_debug;
 	Exception_destroy_and_free(EXCEPTION)
 
 /*
- * Throws *all* exceptions captured in a previous "capture_exceptions" code block.
+ * Moves all captured exceptions back to the context, so that they can be accessed
+ * via get_exception().
+ */
+#define uncapture_exceptions() \
+		ExceptionScope_uncapture_exceptions(current_exception_scope)
+
+/*
+ * Throws the first exception captured in a previous "capture_exceptions" code block.
  *
  * Note that this may cause multiple "catch" code blocks to execute! To adhere to the more
  * standard "catch" semantics, use "throw_first_captured" instead.
@@ -224,13 +231,16 @@ extern FILE *exceptional_debug;
  * Can only be used inside a "with_exceptions" code block.
  */
 #define throw_captured() \
-	ExceptionScope_throw_captured(current_exception_scope)
+	ExceptionScope_throw_captured(current_exception_scope, true)
 
 /*
- * Like "throw_captured", but discards all exceptions except the first.
+ * Like "throw_captured", but throws *all* exceptions captured in a previous "capture_exceptions"
+ * code block.
+ *
+ * This is almost never useful, because it breaks the familiar try/catch semantics.
  */
-#define throw_first_captured() \
-	ExceptionScope_throw_first_captured(current_exception_scope)
+#define throw_all_captured() \
+	ExceptionScope_throw_captured(current_exception_scope, false)
 
 /*
  * Should be called only once.
@@ -450,6 +460,7 @@ void ExceptionContext_dump_frames(ExceptionContext *self, FILE *file);
 void ExceptionContext_add_exception(ExceptionContext *self, Exception *exception);
 Exception *ExceptionContext_fetch_exception(ExceptionContext *self, const ExceptionType *type);
 bool ExceptionContext_has_exceptions(ExceptionContext *self);
+void ExceptionContext_clear_exceptions(ExceptionContext *self, bool except_first);
 void ExceptionContext_dump_exceptions(ExceptionContext *self, FILE *file);
 
 // Helpers
@@ -480,15 +491,15 @@ void ExceptionScope_create(ExceptionScope *self);
 void ExceptionScope_destroy(ExceptionScope *self);
 void ExceptionScope_move_exceptions_to_other_context(ExceptionScope *self, ExceptionScope *relay);
 void ExceptionScope_move_exceptions_from_context(ExceptionScope *self);
-void ExceptionScope_move_exceptions_to_context(ExceptionScope *self, bool only_first);
+void ExceptionScope_move_exceptions_to_context(ExceptionScope *self);
 void ExceptionScope_dump_captured_exceptions(ExceptionScope *self, FILE *file);
 
 // Helpers
 bool ExceptionScope_with_exceptions_relay(ExceptionScope *self, ExceptionScope *relay, jmp_buf *jmp, JumpReason reason, const char *keyword, const char *file, int line, const char *fn);
 void ExceptionScope_with_exceptions_relay_done(ExceptionScope *self, ExceptionScope *relay);
 bool ExceptionScope_capture_exceptions(ExceptionScope *self, jmp_buf *jmp, JumpReason reason, const char *file, int line, const char *fn);
-void ExceptionScope_throw_captured(ExceptionScope *self);
-void ExceptionScope_throw_first_captured(ExceptionScope *self);
+void ExceptionScope_uncapture_exceptions(ExceptionScope *self);
+void ExceptionScope_throw_captured(ExceptionScope *self, bool only_first);
 
 typedef struct struct_ExceptionScope_generic {
 	ExceptionScope super;

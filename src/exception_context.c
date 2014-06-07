@@ -136,6 +136,25 @@ bool ExceptionContext_has_exceptions(ExceptionContext *self) {
 	return !list_empty(&self->exceptions);
 }
 
+void ExceptionContext_clear_exceptions(ExceptionContext *self, bool except_first) {
+	if (list_empty(&self->exceptions))
+		return;
+
+	Exception *first = NULL;
+	if (except_first) {
+		if (list_size(&self->exceptions) == 1)
+			return;
+		first = list_fetch(&self->exceptions);
+	}
+
+	exceptional_list_for_each (&self->exceptions, Exception, exception)
+		Exception_destroy_and_free(exception);
+	list_clear(&self->exceptions);
+
+	if (first)
+		list_append(&self->exceptions, first);
+}
+
 void ExceptionContext_dump_exceptions(ExceptionContext *self, FILE *file) {
 	exceptional_list_for_each (&self->exceptions, Exception, exception) {
 		fprintf(file, ANSI_COLOR_BRIGHT_RED "  ! ");
