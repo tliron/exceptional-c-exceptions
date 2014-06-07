@@ -1,7 +1,7 @@
 Exceptional C Exceptions
 ========================
 
-Yet another try/throw/catch/finally library for C!
+Yet another try/throw/catch/finally library for C! (for C99, actually)
 
 Currently in beta (as of June 7, 2014).
 
@@ -47,7 +47,7 @@ from the main directory.
 Usage
 -----
 
-Before you make any calls that can throw exceptions, you must have a `with\_exceptions`
+Before you make any calls that can throw exceptions, you must have a `with_exceptions`
 code block:
 
 		#include "exceptional.h"
@@ -70,7 +70,7 @@ make sure that the code to be run finally is anywhere in `finally` but outside y
 `catch` code blocks. Exceptional C Exceptions will make sure it is executed during
 unwinding.
 
-Don't worry too much about forgetting the `with\_exceptions`: if you don't put it in,
+Don't worry too much about forgetting the `with_exceptions`: if you don't put it in,
 you will get a compiler error when trying to use `try`/`throw`/`catch`/`finally`.
 
 By the way, anywhere our keywords are followed by a code block, you don't have to use
@@ -98,9 +98,9 @@ That said, note that some keywords are _not_ themselves single lines of code: `t
 `capture_exceptions` should all themselves be inside "{ ... }" if the are to be
 considered as a whole.
 
-In above example, we've used the `Exception\_dump` utility API to print out the
-exception information: it supports `EXCEPTION\_DUMP\_SHORT`,
-`EXCEPTION\_DUMP\_LONG`, and `EXCEPTION\_DUMP\_NESTED`. You can also access this
+In above example, we've used the `Exception_dump` utility API to print out the
+exception information: it supports `EXCEPTION_DUMP_SHORT`,
+`EXCEPTION_DUMP_LONG`, and `EXCEPTION_DUMP_NESTED`. You can also access this
 information directly:
 
 		printf("%s: %s\n%s\nAt %s:%d %s()\n", e->type->name, e->type->description, e->message, e->location.file, e->location.line, e->location.fn);
@@ -136,7 +136,7 @@ will manage the "cause" together with the newly thrown exception (recursively).
 
 Another alternative, if you _do_ need to exit the `catch` code block without a
 `rethrow` (for example: via a  C `return` or a `break` to exit the `catch` block)
-is to release the exception first by calling `release\_exception`:
+is to release the exception first by calling `release_exception`:
 
 		catch (IO, e) {
 			release_exception(e);
@@ -162,13 +162,13 @@ managed by `rethrow`. So we're good, no memory leaks.
 
 #### Contexts
 
-The argument to `with\_exceptions` specifies the context used to store the exceptions
+The argument to `with_exceptions` specifies the context used to store the exceptions
 and the call stack. In a multi-threaded environment, you would need a separate context
 per thread. You can use the contexts `posix`, `openmp` and `sdl`, which all make use of
 thread-local storage specific to that technology.
 
 `global` can be used in a single-threaded environment: the context is stored in a global
-variable used by all `with\_exceptions (global)` code blocks. For an even more restricted
+variable used by all `with_exceptions (global)` code blocks. For an even more restricted
 scope, you can use `local` instead, for which the context will exist only in the current
 local variable scope. `local` is useful for one-off runs of code in which you need
 localized exception handling that will not effect anything else. Note that you can still
@@ -203,7 +203,7 @@ exception thrown in one thread will have no effect on the other. Sometimes, thou
 you actually _do_ want threads to affect each other: see "capturing", below.
 
 For some contexts, you must also call initialization and/or shutdown commands before
-and/or after using them in `with\_exceptions`:
+and/or after using them in `with_exceptions`:
 
 * global: `shutdown_exceptions(global)`
 * posix: `initialize_exceptions(posix)`, `shutdown_exceptions(posix)`
@@ -213,7 +213,7 @@ and/or after using them in `with\_exceptions`:
 #### Functions
 
 Let's say you're writing a function that has a `throw`. If you know in advance
-which context you'll be supporting, you just need to use a `with\_exceptions`:
+which context you'll be supporting, you just need to use a `with_exceptions`:
 
 		int divide(int x, int y) {
 			with_exceptions (global)
@@ -239,7 +239,7 @@ first argument of the function:
 		}
 
 That's not too bad, is it? And it even takes fewer lines than when specifying a
-`with\_exceptions` code block. Well, unfortunately we also need to call such
+`with_exceptions` code block. Well, unfortunately we also need to call such
 functions with a special decorator:
 
 		with_exceptions (posix) {
@@ -249,14 +249,14 @@ functions with a special decorator:
 				printf("%s: %s %s:%d %s()\n", e->type->name, e->message, e->location.file, e->location.line, e->location.fn);
 		}
 
-Note that if your function has no arguments, you must use `WITH\_EXCEPTIONS\_VOID`
-and `CALL\_WITH\_EXCEPTIONS\_VOID` variants. This is due to limitations of C macros.
+Note that if your function has no arguments, you must use `WITH_EXCEPTIONS_VOID`
+and `CALL_WITH_EXCEPTIONS_VOID` variants. This is due to limitations of C macros.
 
 We don't think this function decorator stuff is too awful, but it definitely is a
 little strange. The good thing about this requirement is that the compiler will notify
-you if you're calling such functions without `CALL\_WITH\_EXCEPTIONS`. You will also
+you if you're calling such functions without `CALL_WITH_EXCEPTIONS`. You will also
 get an error if you try to use `throw` in a function that doesn't have
-`WITH\_EXCEPTIONS` (or not in a `with\_exceptions` section). This ensures that the
+`WITH_EXCEPTIONS` (or not in a `with_exceptions` section). This ensures that the
 semantics are always adhered to.
 
 Once again, if you find this syntax too cumbersome, we happily refer you to the
@@ -285,7 +285,7 @@ Usage with OpenMP parallel code requires special consideration: because the sema
 are fork/join, you will be joined back to your current thread when parallelization is
 done. You often will want to postpone exception handling to the "join" phase: after all,
 some threads might fail, while others succeed. For this, we introduce the powerful
-`capture\_exceptions` and `throw\_captured` keywords:
+`capture_exceptions` and `throw_captured` keywords:
 
 		with_exceptions (openmp) {
 			try {
@@ -306,12 +306,12 @@ some threads might fail, while others succeed. For this, we introduce the powerf
 			}
 		}
 
-All uncaught exceptions thrown in the `capture\_exceptions` code black are stored in
-a waiting area within the current scope. Then, when we call `throw\_captured`, any
+All uncaught exceptions thrown in the `capture_exceptions` code black are stored in
+a waiting area within the current scope. Then, when we call `throw_captured`, any
 such waiting exceptions are thrown, as if by calling `rethrow` on them. If there are
 no waiting exceptions, the call will do nothing.
 
-Note that this means that exceptions thrown within a `capture\_exceptions` exit _only_
+Note that this means that exceptions thrown within a `capture_exceptions` exit _only_
 that code block, but execution will continue: 
 
 		capture_exceptions
@@ -356,14 +356,14 @@ to undesired behavior, for example if you free resources in each "catch", it may
 cause free to be called twice. This is especially dangerous if you are relaying
 (see below) to another context, which may not expect this behavior.
 
-Thus, we introduce `throw\_first\_captured` which will adhere to the familiar semantics
+Thus, we introduce `throw_first_captured` which will adhere to the familiar semantics
 semantics. Though if you use it, note that all other exceptions after the first will
 will be discarded. Also note that which exception was thrown first is quite impossible
 to predict in parallel code. 
 
 #### Relaying
 
-You can also use one context inside another, via `with\_exceptions\_relay`: 
+You can also use one context inside another, via `with_exceptions_relay`: 
 
 		int background_thread(void *data) {
 			with_exceptions (sdl) {
@@ -385,11 +385,11 @@ You can also use one context inside another, via `with\_exceptions\_relay`:
 			return 0;
 		}
 
-At the end of the `with\_exceptions\_relay` code block, any exceptions uncaught there
+At the end of the `with_exceptions_relay` code block, any exceptions uncaught there
 will be thrown in the containing (`sdl`, in this example) context.
 
 If you just need a code block to relay from one context to another, you can use the
-`with\_exceptions\_relay\_to` shortcut (it's also a bit more efficient):
+`with_exceptions_relay_to` shortcut (it's also a bit more efficient):
 
 		int background_thread(void *data) {
 			with_exceptions_relay_to (openmp, sdl) {
