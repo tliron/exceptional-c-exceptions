@@ -120,7 +120,7 @@ automatically. Internally, it creates a duplicate (like `strdup`) of your messag
 * Use `throwf` for printf-style formatted messages, e.g.:
 `throwf(Value, "wrong number: %d, for: %s", number, name)`. The default maximum
 message size is 2048, but you can change it by defining `EXCEPTION_MAX_MESSAGE_SIZE`.
-Eceptional C Exceptions will free the generated string automatically.
+Exceptional C Exceptions will free the generated string automatically.
 
 Inside a `catch` code block, you can `rethrow` variants instead of `throw`, specifying
 the caught exception as a "cause":
