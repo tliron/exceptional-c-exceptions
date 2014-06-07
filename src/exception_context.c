@@ -225,16 +225,23 @@ Exception *ExceptionContext_catch(ExceptionContext *self, const ExceptionType *t
 }
 
 void ExceptionContext_catch_done(ExceptionContext *self, Exception *exception) {
-	if (exception) {
-		Exception_destroy_and_free(exception);
-		ExceptionContext_pop_frame(self);
+	if (exceptional_debug) {
+		if (exception)
+			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s \"%s\":\n" ANSI_COLOR_RESET, __FUNCTION__, exception->type->name);
+		else
+			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s:\n" ANSI_COLOR_RESET, __FUNCTION__);
+		ExceptionContext_dump_exceptions(self, exceptional_debug);
+		ExceptionContext_dump_frames(self, exceptional_debug);
 	}
+
+	if (exception)
+		Exception_destroy_and_free(exception);
 }
 
 void ExceptionContext_finally_done(ExceptionContext *self) {
 	ExceptionFrame *frame = ExceptionContext_get_current_frame(self);
 	if (frame && (frame->finally_jump_reason != JUMP_REASON_DONT)) {
-		// Unwinding, so we need to leave the current "try"
+		// Unwinding, so we need to pop the current "try"
 		if (exceptional_debug) {
 			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s thrown:\n" ANSI_COLOR_RESET, __FUNCTION__);
 			ExceptionContext_dump_exceptions(self, exceptional_debug);

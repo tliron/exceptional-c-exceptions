@@ -24,8 +24,8 @@ static void *mythread2(void *data) {
 				for (int i = 0; i < 10; i++) {
 					capture_exceptions {
 						if (i % 2 == 0)
-							throwf(Value, "oops 9 in loop %d", i);
-						printf("loop was OK: %d\n", i);
+							throwf(Value, "oops 9 in loop %d, pthread %lu", i, pthread_self());
+						printf("loop %d was OK in pthread %lu\n", i, pthread_self());
 					}
 				}
 				throw_first_captured();
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 				capture_exceptions {
 					if (i % 2 == 0)
 						throwf(Value, "oops 8 in loop %d", i);
-					printf("loop was OK: %d\n", i);
+					printf("loop %d was OK\n", i);
 				}
 			}
 			throw_first_captured();
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 				capture_exceptions {
 					if (i % 2 == 0)
 						throwf(Value, "oops 8 in loop %d", i);
-					printf("loop was OK: %d\n", i);
+					printf("loop %d was OK\n", i);
 				}
 			}
 			throw_captured();
