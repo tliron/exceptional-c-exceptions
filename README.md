@@ -274,6 +274,12 @@ semantics are always adhered to.
 Once again, if you find this syntax too cumbersome, we happily refer you to the
 alternative libraries mentioned below!
 
+Note that this syntax works with function pointers, too:
+
+		typedef int (*Listener) WITH_EXCEPTIONS (void *data);
+		Listener my_listener = ...
+		int r = (*my_listener) CALL_WITH_EXCEPTIONS (data);
+
 #### Custom Exception Types
 
 In your header files, declare new exception types like so:
