@@ -3,21 +3,19 @@ Exceptional C Exceptions
 
 Yet another try/throw/catch/finally library for C! (for C99, actually)
 
-_Currently in beta and not recommended for production use (as of June 7, 2014)._
+_Currently in beta and not recommended for production use (as of June 8, 2014)._
 
-What makes this library "exceptional" is its intrinsic and exceptionally flexible
-support for multi-threaded environments, with built in support for POSIX thread
-(pthreads), [SDL](http://www.libsdl.org/) threads, and OpenMP. Especially powerful
-is its ability to allow for exceptions to be caught from OpenMP parallel code,
-specifically that multiple threading technologies can be used together: for example,
-use SDL to create background threads, and then allow these background threads to
-have OpenMP parallel code blocks.
+What makes this library "exceptional" is its flexible support for multi-threaded
+environments, specifically POSIX threads (pthreads), [SDL](http://www.libsdl.org/)
+threads, and OpenMP. Especially powerful is its ability to allow for exceptions
+to be thrown in OpenMP-optimized parallel code and caught in other contexts.
+Even C++ can't do that properly.
 
-This powerful feature does introduce some usage quirks. If these are unacceptable to
+Its archtiecture does introduce some usage quirks. If these are unacceptable to
 you, please take a look at the alternative libraries mentioned below! We won't be
-offended: pick the right tool for the job.
+offended: pick the right tool for the job, always.
 
-Otherwise, you get the following standard features with Exceptional C Exceptions:
+Exceptional C Exceptions also has the following standard features:
 
 * Exceptions contain call location information: specifically the filename and line
 where they were thrown.
