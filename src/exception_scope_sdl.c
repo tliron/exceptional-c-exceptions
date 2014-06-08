@@ -6,6 +6,8 @@ static SDL_TLSID exception_context_sdl = 0;
 typedef void (*sdl_tls_destroy_fn)(void *);
 
 void ExceptionScope_initialize_sdl() {
+	if (exceptional_debug)
+		exceptional_dump_fn(exceptional_debug, __FUNCTION__, NULL, NULL);
 	exception_context_sdl = SDL_TLSCreate();
 }
 

@@ -3,6 +3,8 @@
 static ExceptionContext exception_context_global = {0};
 
 void ExceptionScope_shutdown_global() {
+	if (exceptional_debug)
+		exceptional_dump_fn(exceptional_debug, __FUNCTION__, NULL, NULL);
 	ExceptionContext_destroy(&exception_context_global);
 }
 

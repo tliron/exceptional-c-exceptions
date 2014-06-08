@@ -221,8 +221,15 @@ and/or after using them in `with_exceptions`:
 
 * global: `shutdown_exceptions(global)`
 * posix: `initialize_exceptions(posix)`, `shutdown_exceptions(posix)`
-* openmp: `initialize_exceptions(openmp)`, `shutdown_exceptions(openmp)`   
-* sdl: `initialize_exceptions(sdl)`   
+* openmp: `initialize_exceptions(openmp)`, `shutdown_exceptions(openmp)`
+* sdl: `initialize_exceptions(sdl)`
+
+If you're using OpenMP together with another context (see "relaying", below), then
+you must make sure to call  `initialize_exceptions(openmp)` and
+`shutdown_exceptions(openmp)` from _within the containing context_. For example,
+if you're using POSIX threads, initialize/shutdown OpenMP in the POSIX thread
+function. The reason for this is that implementations of OpenMP may create separate
+thread teams per thread from which they are called.
 
 #### Functions
 

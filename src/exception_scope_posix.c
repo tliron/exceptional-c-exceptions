@@ -7,10 +7,14 @@ static pthread_key_t exception_context_posix = 0;
 typedef void (*pthread_key_destroy_fn)(void *);
 
 void ExceptionScope_initialize_posix() {
+	if (exceptional_debug)
+		exceptional_dump_fn(exceptional_debug, __FUNCTION__, NULL, NULL);
 	pthread_key_create(&exception_context_posix, (pthread_key_destroy_fn) ExceptionContext_destroy_and_free);
 }
 
 void ExceptionScope_shutdown_posix() {
+	if (exceptional_debug)
+		exceptional_dump_fn(exceptional_debug, __FUNCTION__, NULL, NULL);
 	pthread_key_delete(exception_context_posix);
 }
 
