@@ -17,6 +17,8 @@ static void *mythread1(void *data) {
 }
 
 static void *mythread2(void *data) {
+	initialize_exceptions(openmp);
+
 	with_exceptions (posix) {
 		try {
 			with_exceptions_relay (openmp) {
@@ -33,6 +35,9 @@ static void *mythread2(void *data) {
 		finally catch (Exception, e)
 			Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
 	}
+
+	shutdown_exceptions(openmp);
+
 	return NULL;
 }
 
