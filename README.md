@@ -8,12 +8,12 @@ _Currently in beta and not recommended for production use (as of June 8, 2014)._
 What makes this library "exceptional" is its flexible support for multi-threaded
 environments, specifically POSIX threads (pthreads), [SDL](http://www.libsdl.org/)
 threads, and OpenMP. Especially powerful is its ability to allow for exceptions
-to be thrown in OpenMP-optimized parallel code and caught in other contexts.
-Even C++ can't do that properly.
+to be thrown in OpenMP-optimized parallel code and caught in the containing context.
+(Even C++ can't do that properly.)
 
-Its archtiecture does introduce some usage quirks. If these are unacceptable to
-you, please take a look at the alternative libraries mentioned below! We won't be
-offended: pick the right tool for the job, always.
+Its architecture does introduce some usage quirks. If these are unacceptable to
+you, please take a look at the alternative libraries mentioned below. We won't be
+offended: pick the right tool for the job, always!
 
 Exceptional C Exceptions also has the following standard features:
 
