@@ -41,6 +41,9 @@ The example showcases POSIX threads and OpenMP. To keep things simple, it doesn'
 showcase SDL. If you want to build Exceptional C Exceptions with SDL support, just
 make sure to include the file "exception_scope_sdl.c" in your build.
 
+If you run "example" with any argument, it will also dump some nice and colorful
+Exceptional C Exceptions debug information to stderr.
+
 The git repository also includes an Eclipse CDT project, so you can just import
 from the main directory.
 
@@ -249,10 +252,11 @@ first argument of the function:
 			return x / y;
 		}
 
-That's not too bad, is it? The requirement is similar to that for checked
-exceptions in other languages. And it even takes fewer lines than when specifying
-a `with_exceptions` code block. Well, unfortunately we also need to call such
-functions with a special decorator:
+That's not too bad, is it? The requirement for decorating the function is similar
+to that for checked exceptions in other languages. And it even takes fewer lines
+than when specifying a `with_exceptions` code block.
+
+Well, unfortunately we also need to call such functions with a special decorator:
 
 		with_exceptions (posix) {
 			try
@@ -264,12 +268,13 @@ functions with a special decorator:
 Note that if your function has no arguments, you must use `WITH_EXCEPTIONS_VOID`
 and `CALL_WITH_EXCEPTIONS_VOID` variants. This is due to limitations of C macros.
 
-We don't think this function decorator stuff is too awful, but it definitely is a
-little strange. The good thing about this requirement is that the compiler will
+We don't think this function decorator stuff is too awful, but it definitely seem
+a bit strange. The good thing about this requirement is that the compiler will
 notify you if you're calling such functions without `CALL_WITH_EXCEPTIONS`. You will
-also get an error if you try to use `throw` in a function that doesn't have
+likewise get an error if you try to use `throw` in a function that doesn't have
 `WITH_EXCEPTIONS` (or not in a `with_exceptions` section). This ensures that the
-semantics are always adhered to.
+semantics are always adhered to, and that you can look at code and clearly see which
+functions are capable of throwing exceptions.
 
 Once again, if you find this syntax too cumbersome, we happily refer you to the
 alternative libraries mentioned below!
@@ -278,7 +283,7 @@ Note that this syntax works with function pointers, too:
 
 		typedef int (*Listener) WITH_EXCEPTIONS (void *data);
 		Listener my_listener = ...
-		int r = (*my_listener) CALL_WITH_EXCEPTIONS (data);
+		int r = (*my_listener) CALL_WITH_EXCEPTIONS (&my_data);
 
 #### Custom Exception Types
 

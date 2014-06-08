@@ -3,6 +3,17 @@
 
 #define NULL_REPLACEMENT '_'
 
+void exceptional_dump_fn(FILE *file, const char *fn, const char *tag, const char *extra) {
+	if (tag) {
+		if (extra)
+			fprintf(file, ANSI_COLOR_BRIGHT_CYAN "%s %s \"%s\":\n" ANSI_COLOR_RESET, fn, tag, extra);
+		else
+			fprintf(file, ANSI_COLOR_BRIGHT_CYAN "%s %s:\n" ANSI_COLOR_RESET, fn, tag);
+	}
+	else
+		fprintf(file, ANSI_COLOR_BRIGHT_CYAN "%s:\n" ANSI_COLOR_RESET, fn);
+}
+
 char *exceptional_bstring_to_string(bstring string_b) {
 	return bstr2cstr(string_b, NULL_REPLACEMENT);
 }
@@ -14,7 +25,7 @@ char *exceptional_strdup(const char *string) {
 	return dup;
 }
 
-char *exceptional_sprintf(size_t max_size, char *format, va_list args) {
+char *exceptional_sprintf(size_t max_size, const char *format, va_list args) {
 	char *string;
 	bstring string_b = bfromcstr("");
 	int r = bvcformata(string_b, max_size, format, args);

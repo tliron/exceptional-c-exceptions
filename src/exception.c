@@ -14,11 +14,15 @@ Exception *Exception_new(const ExceptionType *type, Exception *cause, const char
 	return exception;
 }
 
+Exception *Exception_newc(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, const char *message) {
+	return Exception_new(type, cause, file, line, fn, (char *) message, false);
+}
+
 Exception *Exception_newd(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, char *message) {
 	return Exception_new(type, cause, file, line, fn, exceptional_strdup(message), true);
 }
 
-Exception *Exception_newf(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, char *format, ...) {
+Exception *Exception_newf(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, const char *format, ...) {
 	va_list args;
 	va_start(args, format);
 	return Exception_new(type, cause, file, line, fn, exceptional_sprintf(EXCEPTION_MAX_MESSAGE_SIZE, format, args), true);

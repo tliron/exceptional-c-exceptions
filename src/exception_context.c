@@ -176,13 +176,16 @@ void ExceptionContext_try(ExceptionContext *self, jmp_buf *jmp, JumpReason reaso
 			// Re-insert the "try" jump point: an exception might be thrown again in "finally"
 			ExceptionContext_push_frame(self, jmp, JUMP_REASON_THROW, false, true, "try/rethrow", file, line, fn);
 
+		// Make sure we have no more than one exception
+		ExceptionContext_clear_exceptions(self, true);
+
 		if (exceptional_debug) {
 			if (reason == JUMP_REASON_THROW)
-				fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s thrown:\n" ANSI_COLOR_RESET, __FUNCTION__);
+				exceptional_dump_fn(exceptional_debug, __FUNCTION__, "thrown", NULL);
 			else if (reason == JUMP_REASON_RETHROW)
-				fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s rethrown:\n" ANSI_COLOR_RESET, __FUNCTION__);
+				exceptional_dump_fn(exceptional_debug, __FUNCTION__, "rethrown", NULL);
 			else
-				fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s done:\n" ANSI_COLOR_RESET, __FUNCTION__);
+				exceptional_dump_fn(exceptional_debug, __FUNCTION__, "end", NULL);
 			ExceptionContext_dump_exceptions(self, exceptional_debug);
 			ExceptionContext_dump_frames(self, exceptional_debug);
 		}
@@ -193,7 +196,7 @@ void ExceptionContext_try(ExceptionContext *self, jmp_buf *jmp, JumpReason reaso
 		ExceptionContext_push_frame(self, jmp, JUMP_REASON_DONT, true, false, "try", file, line, fn);
 
 		if (exceptional_debug) {
-			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s start:\n" ANSI_COLOR_RESET, __FUNCTION__);
+			exceptional_dump_fn(exceptional_debug, __FUNCTION__, "begin", NULL);
 			ExceptionContext_dump_exceptions(self, exceptional_debug);
 			ExceptionContext_dump_frames(self, exceptional_debug);
 		}
@@ -204,7 +207,7 @@ void ExceptionContext_throw(ExceptionContext *self, Exception *exception) {
 	ExceptionContext_add_exception(self, exception);
 
 	if (exceptional_debug) {
-		fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s \"%s\":\n" ANSI_COLOR_RESET, __FUNCTION__, exception->type->name);
+		exceptional_dump_fn(exceptional_debug, __FUNCTION__, NULL, exception->type->name);
 		ExceptionContext_dump_exceptions(self, exceptional_debug);
 		ExceptionContext_dump_frames(self, exceptional_debug);
 	}
@@ -219,7 +222,7 @@ void ExceptionContext_throw(ExceptionContext *self, Exception *exception) {
 Exception *ExceptionContext_catch(ExceptionContext *self, const ExceptionType *type) {
 	ExceptionFrame *frame = ExceptionContext_get_current_frame(self);
 	if (frame && frame->rethrowing)
-		// Don't catch when an exception is rethrowed
+		// Don't catch when an exception is rethrowm
 		return NULL;
 
 	Exception *exception = ExceptionContext_fetch_exception(self, type);
@@ -233,9 +236,9 @@ Exception *ExceptionContext_catch(ExceptionContext *self, const ExceptionType *t
 
 	if (exceptional_debug) {
 		if (exception)
-			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s hit \"%s\":\n" ANSI_COLOR_RESET, __FUNCTION__, type->name);
+			exceptional_dump_fn(exceptional_debug, __FUNCTION__, "hit", type->name);
 		else
-			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s miss \"%s\":\n" ANSI_COLOR_RESET, __FUNCTION__, type->name);
+			exceptional_dump_fn(exceptional_debug, __FUNCTION__, "miss", type->name);
 		ExceptionContext_dump_exceptions(self, exceptional_debug);
 		ExceptionContext_dump_frames(self, exceptional_debug);
 	}
@@ -246,9 +249,9 @@ Exception *ExceptionContext_catch(ExceptionContext *self, const ExceptionType *t
 void ExceptionContext_catch_done(ExceptionContext *self, Exception *exception) {
 	if (exceptional_debug) {
 		if (exception)
-			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s \"%s\":\n" ANSI_COLOR_RESET, __FUNCTION__, exception->type->name);
+			exceptional_dump_fn(exceptional_debug, __FUNCTION__, "hit", exception->type->name);
 		else
-			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s:\n" ANSI_COLOR_RESET, __FUNCTION__);
+			exceptional_dump_fn(exceptional_debug, __FUNCTION__, "miss", NULL);
 		ExceptionContext_dump_exceptions(self, exceptional_debug);
 		ExceptionContext_dump_frames(self, exceptional_debug);
 	}
@@ -262,14 +265,14 @@ void ExceptionContext_finally_done(ExceptionContext *self) {
 	if (frame && (frame->finally_jump_reason != JUMP_REASON_DONT)) {
 		// Unwinding, so we need to pop the current "try"
 		if (exceptional_debug) {
-			fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s thrown:\n" ANSI_COLOR_RESET, __FUNCTION__);
+			exceptional_dump_fn(exceptional_debug, __FUNCTION__, "unwind", NULL);
 			ExceptionContext_dump_exceptions(self, exceptional_debug);
 			ExceptionContext_dump_frames(self, exceptional_debug);
 		}
 		ExceptionContext_pop_frame(self);
 	}
 	else if (exceptional_debug) {
-		fprintf(exceptional_debug, ANSI_COLOR_BRIGHT_CYAN "%s:\n" ANSI_COLOR_RESET, __FUNCTION__);
+		exceptional_dump_fn(exceptional_debug, __FUNCTION__, NULL, NULL);
 		ExceptionContext_dump_exceptions(self, exceptional_debug);
 		ExceptionContext_dump_frames(self, exceptional_debug);
 	}

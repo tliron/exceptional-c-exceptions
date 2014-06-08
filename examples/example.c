@@ -9,7 +9,7 @@ static void test WITH_EXCEPTIONS (const char *text) {
 static void *mythread1(void *data) {
 	with_exceptions (posix) {
 		try
-			throwf(Exception, "oops 7 in pthread %lu", pthread_self());
+			throwf(Exception, "oops 7 in thread %lu", pthread_self());
 		finally catch (Exception, e)
 			Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
 	}
@@ -24,8 +24,8 @@ static void *mythread2(void *data) {
 				for (int i = 0; i < 10; i++) {
 					capture_exceptions {
 						if (i % 2 == 0)
-							throwf(Value, "oops 9 in loop %d, pthread %lu", i, pthread_self());
-						printf("loop %d was OK in pthread %lu\n", i, pthread_self());
+							throwf(Value, "oops 9 in loop %d, thread %lu", i, pthread_self());
+						printf("loop %d was OK in thread %lu\n", i, pthread_self());
 					}
 				}
 			}
@@ -38,7 +38,7 @@ static void *mythread2(void *data) {
 
 int main(int argc, char *argv[]) {
 	if (argc > 1)
-		exceptional_debug = stdout;
+		exceptional_debug = stderr;
 
 	initialize_exceptions(posix);
 	initialize_exceptions(openmp);
@@ -77,10 +77,10 @@ int main(int argc, char *argv[]) {
 		printf(ANSI_COLOR_BRIGHT_GREEN "Proper unwinding:\n" ANSI_COLOR_RESET);
 		try {
 			try
-				test CALL_WITH_EXCEPTIONS ("oops 5");
+				test CALL_WITH_EXCEPTIONS ("oops 6");
 			finally {
 				catch (Exception, e)
-					rethrow(e, Exception, "oops 6");
+					rethrow(e, Exception, "oops 5");
 				printf("This line is executed even when an exception is thrown\n");
 			}
 			printf("This line won't be executed because an exception was thrown!\n");

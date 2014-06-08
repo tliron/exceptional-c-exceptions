@@ -162,7 +162,7 @@ extern FILE *exceptional_debug;
 #define throw(TYPE, MESSAGE) \
 	/* Add an exception and then jump to the previous jump point on the stack. */ \
 	ExceptionContext_throw(get_current_exception_context(), \
-		Exception_new(&ExceptionType##TYPE, NULL, __FILE__, __LINE__, __FUNCTION__, MESSAGE, false))
+		Exception_newc(&ExceptionType##TYPE, NULL, __FILE__, __LINE__, __FUNCTION__, MESSAGE))
 
 /*
  * Like "throw", except that "message" will be duplicated, and eventually freed (either
@@ -189,7 +189,7 @@ extern FILE *exceptional_debug;
 #define rethrow(CAUSE, TYPE, MESSAGE) \
 	/* Add an exception and then jump to the previous jump point on the stack. */ \
 	ExceptionContext_throw(get_current_exception_context(), \
-		Exception_new(&ExceptionType##TYPE, CAUSE, __FILE__, __LINE__, __FUNCTION__, MESSAGE, false))
+		Exception_newc(&ExceptionType##TYPE, CAUSE, __FILE__, __LINE__, __FUNCTION__, MESSAGE))
 
 /*
  * Like "throwd", with a cause (can be null).
@@ -223,24 +223,12 @@ extern FILE *exceptional_debug;
 		ExceptionScope_uncapture_exceptions(current_exception_scope)
 
 /*
- * Throws the first exception captured in a previous "capture_exceptions" code block.
- *
- * Note that this may cause multiple "catch" code blocks to execute! To adhere to the more
- * standard "catch" semantics, use "throw_first_captured" instead.
+ * Throws exceptions captured in a previous "capture_exceptions" code block.
  *
  * Can only be used inside a "with_exceptions" code block.
  */
 #define throw_captured() \
-	ExceptionScope_throw_captured(current_exception_scope, true)
-
-/*
- * Like "throw_captured", but throws *all* exceptions captured in a previous "capture_exceptions"
- * code block.
- *
- * This is almost never useful, because it breaks the familiar try/catch semantics.
- */
-#define throw_all_captured() \
-	ExceptionScope_throw_captured(current_exception_scope, false)
+	ExceptionScope_throw_captured(current_exception_scope)
 
 /*
  * Should be called only once.
@@ -407,8 +395,9 @@ typedef struct struct_Exception {
 } Exception;
 
 Exception *Exception_new(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, char *message, bool own_message);
+Exception *Exception_newc(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, const char *message);
 Exception *Exception_newd(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, char *message);
-Exception *Exception_newf(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, char *format, ...);
+Exception *Exception_newf(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, const char *format, ...);
 void Exception_destroy(Exception *self);
 void Exception_destroy_and_free(Exception *self);
 void Exception_dump(Exception *self, FILE *file, ExceptionDumpDetail detail);
@@ -499,7 +488,7 @@ bool ExceptionScope_with_exceptions_relay(ExceptionScope *self, ExceptionScope *
 void ExceptionScope_with_exceptions_relay_done(ExceptionScope *self, ExceptionScope *relay);
 bool ExceptionScope_capture_exceptions(ExceptionScope *self, jmp_buf *jmp, JumpReason reason, const char *file, int line, const char *fn);
 void ExceptionScope_uncapture_exceptions(ExceptionScope *self);
-void ExceptionScope_throw_captured(ExceptionScope *self, bool only_first);
+void ExceptionScope_throw_captured(ExceptionScope *self);
 
 typedef struct struct_ExceptionScope_generic {
 	ExceptionScope super;
@@ -581,11 +570,13 @@ ExceptionScope_openmp ExceptionScope_openmp_new();
 #define ANSI_COLOR_BRIGHT_CYAN    "\x1b[01;36m"
 #define ANSI_COLOR_RESET          "\x1b[0m"
 
+void exceptional_dump_fn(FILE *file, const char *fn, const char *tag, const char *extra);
+
 // Better String Library
 
 char *exceptional_bstring_to_string(bstring string_b);
 char *exceptional_strdup(const char *string);
-char *exceptional_sprintf(size_t max_size, char *format, va_list args);
+char *exceptional_sprintf(size_t max_size, const char *format, va_list args);
 
 // SimCList
 
