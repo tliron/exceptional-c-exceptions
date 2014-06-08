@@ -349,6 +349,8 @@ DECLARE_EXCEPTION_TYPE(DeadLocked); // Synchronization
 
 DECLARE_EXCEPTION_TYPE(Memory); // Exception
 DECLARE_EXCEPTION_TYPE(NotEnoughMemory); // Memory
+DEFINE_EXCEPTION_TYPE(PoolEmpty); // Memory
+DEFINE_EXCEPTION_TYPE(PoolFull); // Memory
 
 DECLARE_EXCEPTION_TYPE(IO); // Exception
 DECLARE_EXCEPTION_TYPE(File); // IO

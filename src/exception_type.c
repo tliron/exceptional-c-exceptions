@@ -17,6 +17,8 @@ DEFINE_EXCEPTION_TYPE(DeadLock, Synchronization, "A thread dead-lock situation w
 
 DEFINE_EXCEPTION_TYPE(Memory, Exception, "A memory-related exception was detected");
 DEFINE_EXCEPTION_TYPE(NotEnoughMemory, Memory, "More memory was required than was available");
+DEFINE_EXCEPTION_TYPE(PoolEmpty, Memory, "A resource pool could not provide us with resources");
+DEFINE_EXCEPTION_TYPE(PoolFull, Memory, "Additional resources could not be added to a resource pool");
 
 DEFINE_EXCEPTION_TYPE(IO, Exception, "An input or output exception was detected");
 DEFINE_EXCEPTION_TYPE(File, IO, "A filesystem exception was detected");
