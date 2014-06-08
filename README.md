@@ -28,8 +28,8 @@ also have a "cause", and so on.
 Building and Running the Example
 --------------------------------
 
-We use [Waf](https://code.google.com/p/waf/) to build. You Python installed for Waf
-to work, and of course a C compiler (tested with gcc). Build and run:
+We use [Waf](https://code.google.com/p/waf/) to build. You need Python installed for
+Waf to work, and of course a C compiler to build (tested with gcc). Build and run:
 
 		./waf configure
 		./waf build
