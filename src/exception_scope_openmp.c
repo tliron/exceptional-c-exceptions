@@ -3,39 +3,29 @@
 #include "exceptional.h"
 #include <stdlib.h>
 
-static ExceptionContext exception_context_openmp = {0};
+static ExceptionContext exception_context_openmp;
 #pragma omp threadprivate(exception_context_openmp)
 
-static list_t exception_contexts = {0};
-static omp_lock_t lock;
-
 void ExceptionScope_initialize_openmp() {
-	list_init(&exception_contexts);
-	omp_init_lock(&lock);
+	#pragma omp parallel
+	{
+		if (exceptional_debug)
+			exceptional_dump_fn(exceptional_debug, __FUNCTION__, NULL, NULL);
+		exception_context_openmp = (ExceptionContext) {0};
+		ExceptionContext_create(&exception_context_openmp);
+	}
 }
 
-#include <stdio.h>
-
 void ExceptionScope_shutdown_openmp() {
-	if (exceptional_list_initialized(&exception_contexts)) {
-		//exceptional_list_for_each (&exception_contexts, ExceptionContext, context)
-			//ExceptionContext_destroy(context); // TODO segfaults sometimes :(
-		list_destroy(&exception_contexts);
-		exception_contexts = (list_t) {0};
+	#pragma omp parallel
+	{
+		if (exceptional_debug)
+			exceptional_dump_fn(exceptional_debug, __FUNCTION__, NULL, NULL);
+		ExceptionContext_destroy(&exception_context_openmp);
 	}
-	omp_destroy_lock(&lock);
 }
 
 static ExceptionContext *ExceptionScope_openmp_get(ExceptionScope_openmp *scope) {
-	if (!exception_context_openmp.valid) {
-		// This context has not been used yet, so create it
-		ExceptionContext_create(&exception_context_openmp);
-		omp_set_lock(&lock);
-		// Keep track of created contexts so that we can properly destroy them later
-		list_append(&exception_contexts, &exception_context_openmp);
-		omp_unset_lock(&lock);
-	}
-
 	return &exception_context_openmp;
 }
 
