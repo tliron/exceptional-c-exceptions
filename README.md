@@ -28,16 +28,16 @@ also have a "cause", and so on.
 Building and Running the Example
 --------------------------------
 
-We use [Waf](https://code.google.com/p/waf/) to build. You just need gcc and Python
-installed. Do this in a terminal:
+We use [Waf](https://code.google.com/p/waf/) to build. You Python installed for Waf
+to work, and of course a C compiler (tested with gcc). Build and run:
 
 		./waf configure
 		./waf build
 		build/example
 
-The example showcases POSIX threads and OpenMP. To keep things simple, it doesn't
-showcase SDL. If you want to build Exceptional C Exceptions with SDL support, just
-make sure to include the file "exception_scope_sdl.c" in your build.
+The example showcases both POSIX threads and OpenMP. To keep things simple, it
+doesn't use SDL. If you want to build Exceptional C Exceptions with SDL support,
+just make sure to include the file "exception_scope_sdl.c" in your build.
 
 If you run "example" with any argument, it will also dump some nice and colorful
 Exceptional C Exceptions debug information to stderr.
