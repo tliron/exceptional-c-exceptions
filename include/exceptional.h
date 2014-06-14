@@ -325,9 +325,9 @@ extern FILE *exceptional_debug;
 // ExceptionType
 //
 
-typedef struct struct_ExceptionType {
+typedef struct ExceptionType {
 	const char *name, *description;
-	const struct struct_ExceptionType *super;
+	const struct ExceptionType *super;
 } ExceptionType;
 
 bool ExceptionType_is_a(const ExceptionType *self, const ExceptionType *type);
@@ -369,7 +369,7 @@ DECLARE_EXCEPTION_TYPE(TerminationRequest); // Signal
 // ExceptionProgramLocation
 //
 
-typedef struct struct_ExceptionProgramLocation {
+typedef struct ExceptionProgramLocation {
 	const char *file, *fn;
 	int line;
 } ExceptionProgramLocation;
@@ -388,12 +388,12 @@ typedef struct struct_ExceptionProgramLocation {
 
 typedef unsigned char ExceptionDumpDetail;
 
-typedef struct struct_Exception {
+typedef struct Exception {
 	const ExceptionType *type;
 	char *message;
 	bool own_message;
 	ExceptionProgramLocation location;
-	struct struct_Exception *cause;
+	struct Exception *cause;
 } Exception;
 
 Exception *Exception_new(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, char *message, bool own_message);
@@ -414,7 +414,7 @@ void Exception_dump(Exception *self, FILE *file, ExceptionDumpDetail detail);
 
 typedef int JumpReason;
 
-typedef struct struct_ExceptionFrame {
+typedef struct ExceptionFrame {
 	jmp_buf jmp;
 	const char *keyword;
 	ExceptionProgramLocation location;
@@ -428,7 +428,7 @@ void ExceptionFrame_dump(ExceptionFrame *self, FILE *file);
 // ExceptionContext
 //
 
-typedef struct struct_ExceptionContext {
+typedef struct ExceptionContext {
 	bool valid;
 	list_t frames, exceptions;
 } ExceptionContext;
@@ -469,7 +469,7 @@ Exception *ExceptionContext_get_exception(ExceptionContext *self, int index);
 
 typedef ExceptionContext *(*ExceptionScope_get_fn)(void *reference);
 
-typedef struct struct_ExceptionScope {
+typedef struct ExceptionScope {
 	ExceptionScope_get_fn get;
 	list_t captured_exceptions;
 	bool done;
@@ -492,30 +492,30 @@ bool ExceptionScope_capture_exceptions(ExceptionScope *self, jmp_buf *jmp, JumpR
 void ExceptionScope_uncapture_exceptions(ExceptionScope *self);
 void ExceptionScope_throw_captured(ExceptionScope *self);
 
-typedef struct struct_ExceptionScope_generic {
+typedef struct ExceptionScope_generic {
 	ExceptionScope super;
 } ExceptionScope_generic;
 
-typedef struct struct_ExceptionScope_local {
+typedef struct ExceptionScope_local {
 	ExceptionScope super;
 	ExceptionContext local_context;
 } ExceptionScope_local;
 
-typedef struct struct_ExceptionScope_global {
+typedef struct ExceptionScope_global {
 	ExceptionScope super;
 } ExceptionScope_global;
 
-typedef struct struct_ExceptionScope_posix {
+typedef struct ExceptionScope_posix {
 	ExceptionScope super;
 	ExceptionContext *context;
 } ExceptionScope_posix;
 
-typedef struct struct_ExceptionScope_sdl {
+typedef struct ExceptionScope_sdl {
 	ExceptionScope super;
 	ExceptionContext *context;
 } ExceptionScope_sdl;
 
-typedef struct struct_ExceptionScope_openmp {
+typedef struct ExceptionScope_openmp {
 	ExceptionScope super;
 } ExceptionScope_openmp;
 

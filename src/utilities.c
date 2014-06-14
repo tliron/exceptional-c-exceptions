@@ -29,7 +29,7 @@ char *exceptional_sprintf(size_t max_size, const char *format, va_list args) {
 	char *string;
 	bstring string_b = bfromcstr("");
 	int r = bvcformata(string_b, max_size, format, args);
-	if (r != BSTR_ERR)
+	if (r > BSTR_ERR)
 		string = exceptional_bstring_to_string(string_b);
 	else
 		string = exceptional_strdup(format);
