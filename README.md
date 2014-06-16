@@ -50,7 +50,7 @@ On platforms that do not support backtrace, you may disable this by removing the
 * enable debug symbols (compile with `-g`) for showing function names,
 * enable all dynamic symbols, not just used ones (link with `-rdynamic`), for
 showing filename and line numbers, and
-* possibly disable compiler optimizations (`-O'), because they might affect line
+* possibly disable compiler optimizations (`-O`), because they might affect line
 numbers.
  
 To keep things simple, the example doesn't use SDL. If you want to build Exceptional
