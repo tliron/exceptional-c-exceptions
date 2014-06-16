@@ -17,13 +17,14 @@ offended: pick the right tool for the job, always!
 
 Exceptional C Exceptions also has the following standard features:
 
-* Exceptions contain call location information: specifically the filename and line
-where they were thrown.
 * Create a custom exception type hierarchy, whereby a `catch` would also match any
 descendant types.
 * Exception message formatting a-la `printf`.
 * Nested exceptions: an exception can have a "cause", another exception, which can
 also have a "cause", and so on.
+* Exceptions contain call location information: specifically the filename and line
+where they were thrown. Furthermore, a complete stack trace will be available on
+supported platforms. 
 
 Building and Running the Example
 --------------------------------
@@ -35,12 +36,26 @@ Waf to work, and of course a C compiler to build (tested with gcc). Build and ru
 		./waf build
 		build/example
 
-The example showcases both POSIX threads and OpenMP. To keep things simple, it
-doesn't use SDL. If you want to build Exceptional C Exceptions with SDL support,
-just make sure to include the file "exception_scope_sdl.c" in your build.
+The example showcases both POSIX threads and OpenMP. If you run "example" with any
+argument, it will also dump some nice and colorful Exceptional C Exceptions debug
+information to stderr.
 
-If you run "example" with any argument, it will also dump some nice and colorful
-Exceptional C Exceptions debug information to stderr.
+The build script is in "wscript" (standard Python code).
+
+By default, the build will enable complete exception stack traces using libc's
+[backtrace](http://www.gnu.org/software/libc/manual/html_node/Backtraces.html).
+On platforms that do not support backtrace, you may disable this by remove the
+`EXCEPTIONAL_BACKTRACE` flag. Also note that for backtraces to work best you want to
+
+* enable debug symbols (compile with `-g`) for showing function names,
+* enable all dynamic symbols, not just used ones (link with `-rdynamic`), for
+showing filename and line numbers, and
+* possibly disable compiler optimizations (`-O'), because they might affect line
+numbers.
+ 
+To keep things simple, the example doesn't use SDL. If you want to build Exceptional
+C Exceptions with SDL support, just make sure to include the file "exception_scope_sdl.c"
+in your build.
 
 The git repository also includes an Eclipse CDT project, so you can just import
 from the main directory.
@@ -117,13 +132,16 @@ information directly:
 			e->location.line,
 			e->location.fn);
 
+When backtrace is enabled, `Exception_dump` will also print the full stack trace
+of the exception.
+
 #### Throwing
 
-There are two additional variants of `throw`:
+There are three additional variants of `throw`:
 
 * Use `throwd` when you want to let Exceptional C Exceptions free the message string
-automatically. Internally, it creates a duplicate (like `strdup`) of your message.
-* Use `throwf` for printf-style formatted messages, e.g.:
+automatically. Internally, it creates a _duplicate_ (like `strdup`) of your message.
+* Use `throwf` for printf-style _formatted messages_, e.g.:
 `throwf(Value, "wrong number: %d, for: %s", number, name)`. The default maximum
 message size is 2048, but you can change it by defining `EXCEPTION_MAX_MESSAGE_SIZE`.
 Exceptional C Exceptions will free the generated string automatically.
@@ -136,6 +154,9 @@ specifying the caught exception as a "cause":
 
 You can access the cause of any exception using `e->cause` recursively. It will be
 null if there is no cause.
+
+There is also a `rethrowe` variant for throwing the exact _explicit_ exception
+instance without any nesting.
 
 #### Catching
 
@@ -184,7 +205,7 @@ variable used by all `with_exceptions (global)` code blocks. For an even more re
 scope, you can use `local` instead, for which the context will exist only in the current
 local variable scope. `local` is useful for one-off runs of code in which you need
 localized exception handling that will not effect anything else. Note that you can still
-relay  to `local` contexts from called functions (see below).
+relay  to `local` contexts from called functions (see "functions", below).
 
 Here's an SDL example:
 

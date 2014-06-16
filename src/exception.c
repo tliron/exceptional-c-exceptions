@@ -11,6 +11,13 @@ Exception *Exception_new(const ExceptionType *type, Exception *cause, const char
 	exception->location.fn = fn;
 	exception->message = message;
 	exception->own_message = own_message;
+
+#ifdef EXCEPTIONAL_BACKTRACE
+	exception->backtrace = malloc(sizeof(ExceptionBacktrace));
+	ExceptionBacktrace_create(exception->backtrace);
+	exception->backtrace->skip++;
+#endif
+
 	return exception;
 }
 
@@ -25,13 +32,17 @@ Exception *Exception_newd(const ExceptionType *type, Exception *cause, const cha
 Exception *Exception_newf(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, const char *format, ...) {
 	va_list args;
 	va_start(args, format);
-	return Exception_new(type, cause, file, line, fn, exceptional_sprintf(EXCEPTION_MAX_MESSAGE_SIZE, format, args), true);
+	return Exception_new(type, cause, file, line, fn, exceptional_sprintf(EXCEPTIONAL_MAX_MESSAGE_SIZE, format, args), true);
 }
 
 void Exception_destroy(Exception *self) {
 	if (self->own_message && self->message) {
 		free(self->message);
 		self->message = NULL;
+	}
+	if (self->backtrace) {
+		free(self->backtrace);
+		self->backtrace = NULL;
 	}
 	while (true) {
 		self = self->cause;
@@ -50,7 +61,7 @@ void Exception_destroy_and_free(Exception *self) {
 static void Exception_dump_causes(Exception *self, FILE *file) {
 	if (!self)
 		return;
-	fprintf(file, "  caused by ");
+	fprintf(file, "Caused by ");
 	Exception_dump(self, file, EXCEPTION_DUMP_LONG);
 	Exception_dump_causes(self->cause, file);
 }
@@ -62,9 +73,17 @@ void Exception_dump(Exception *self, FILE *file, ExceptionDumpDetail detail) {
 		break;
 	case EXCEPTION_DUMP_LONG:
 		fprintf(file, "%s: %s at %s:%d %s()\n", self->type->name, self->message, self->location.file, self->location.line, self->location.fn);
+#ifdef EXCEPTIONAL_BACKTRACE
+		if (self->backtrace)
+			ExceptionBacktrace_dump(self->backtrace, file);
+#endif
 		break;
 	case EXCEPTION_DUMP_NESTED:
 		fprintf(file, "%s: %s at %s:%d %s()\n", self->type->name, self->message, self->location.file, self->location.line, self->location.fn);
+#ifdef EXCEPTIONAL_BACKTRACE
+		if (self->backtrace)
+			ExceptionBacktrace_dump(self->backtrace, file);
+#endif
 		Exception_dump_causes(self->cause, file);
 		break;
 	}

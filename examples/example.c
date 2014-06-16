@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <pthread.h>
 
+static pthread_mutex_t dump_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static void test WITH_EXCEPTIONS (const char *text) {
 	throwf(Exception, "our text is \"%s\"", text);
 }
@@ -10,8 +12,11 @@ static void *mythread1(void *data) {
 	with_exceptions (posix) {
 		try
 			throwf(Exception, "oops 7 in thread %lu", pthread_self());
-		finally catch (Exception, e)
+		finally catch (Exception, e) {
+			pthread_mutex_lock(&dump_mutex);
 			Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
+			pthread_mutex_unlock(&dump_mutex);
+		}
 	}
 	return NULL;
 }
@@ -32,8 +37,11 @@ static void *mythread2(void *data) {
 				}
 			}
 		}
-		finally catch (Exception, e)
+		finally catch (Exception, e) {
+			pthread_mutex_lock(&dump_mutex);
 			Exception_dump(e, stdout, EXCEPTION_DUMP_NESTED);
+			pthread_mutex_unlock(&dump_mutex);
+		}
 	}
 
 	shutdown_exceptions(openmp);

@@ -1,6 +1,9 @@
 #include "exceptional.h"
 #include <stdlib.h>
 
+// Literal bstring
+#define BL(m) (& (struct tagbstring) bsStatic(m))
+
 #define NULL_REPLACEMENT '_'
 
 void exceptional_dump_fn(FILE *file, const char *fn, const char *tag, const char *extra) {
@@ -35,6 +38,17 @@ char *exceptional_sprintf(size_t max_size, const char *format, va_list args) {
 		string = exceptional_strdup(format);
 	bdestroy(string_b);
 	return string;
+}
+
+char *exceptional_escape_spaces(const char *string) {
+	bstring SPACE = BL(" ");
+	bstring ESCAPED_SPACE = BL("\\ ");
+
+	bstring string_b = bfromcstr(string);
+	bfindreplace(string_b, SPACE, ESCAPED_SPACE, 0);
+	char *escaped = exceptional_bstring_to_string(string_b);
+	bdestroy(string_b);
+	return escaped;
 }
 
 bool exceptional_list_initialized(list_t *list) {

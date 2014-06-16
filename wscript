@@ -13,16 +13,18 @@ def build(ctx):
     cflags.append('-std=c99')
     
     # Optimization
-    cflags.append('-O3')
+    #cflags.append('-O3') # would affect backtrace support
 
-    # Debug symbols
+    # Debugging
     cflags.append('-g')
+    cflags.append('-DEXCEPTIONAL_BACKTRACE')
+    linkflags.append('-rdynamic') # for improved backtrace support
     
     # OpenMP
     cflags.append('-fopenmp')
     linkflags.append('-fopenmp')
 
-    # Threads
+    # POSIX threads
     cflags.append('-pthread')
     lib.append('pthread')
     

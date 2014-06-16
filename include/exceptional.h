@@ -176,7 +176,7 @@ extern FILE *exceptional_debug;
 /*
  * Like "throwd", with printf-style formatting.
  *
- * The resulting message is limited in size to EXCEPTION_MAX_MESSAGE_SIZE.
+ * The resulting message is limited in size to EXCEPTIONAL_MAX_MESSAGE_SIZE.
  */
 #define throwf(TYPE, FORMAT, ...) \
 	/* Add an exception and then jump to the previous jump point on the stack. */ \
@@ -206,6 +206,13 @@ extern FILE *exceptional_debug;
 	/* Add an exception and then jump to the previous jump point on the stack. */ \
 	ExceptionContext_throw(get_current_exception_context(), \
 		Exception_newf(&ExceptionType##TYPE, CAUSE, __FILE__, __LINE__, __FUNCTION__, FORMAT, __VA_ARGS__))
+
+/*
+* Like "throw", except uses an explicit Exception object.
+*/
+#define rethrowe(E) \
+	/* Add the exception and then jump to the previous jump point on the stack. */ \
+	ExceptionContext_throw(get_current_exception_context(), E)
 
 /*
  * Release an exception.
@@ -375,11 +382,28 @@ typedef struct ExceptionProgramLocation {
 } ExceptionProgramLocation;
 
 //
+// ExceptionBacktrace
+//
+
+#ifndef EXCEPTION_MAX_BACKTRACE_SIZE
+#define EXCEPTION_MAX_BACKTRACE_SIZE 32
+#endif
+
+typedef struct ExceptionBacktrace {
+	void *frames[EXCEPTION_MAX_BACKTRACE_SIZE];
+	int size;
+	int skip;
+} ExceptionBacktrace;
+
+void ExceptionBacktrace_create(ExceptionBacktrace *self);
+void ExceptionBacktrace_dump(ExceptionBacktrace *self, FILE *file);
+
+//
 // Exception
 //
 
-#ifndef EXCEPTION_MAX_MESSAGE_SIZE
-#define EXCEPTION_MAX_MESSAGE_SIZE 2048
+#ifndef EXCEPTIONAL_MAX_MESSAGE_SIZE
+#define EXCEPTIONAL_MAX_MESSAGE_SIZE 2048
 #endif
 
 #define EXCEPTION_DUMP_SHORT  ((ExceptionDumpDetail) 0)
@@ -394,6 +418,7 @@ typedef struct Exception {
 	bool own_message;
 	ExceptionProgramLocation location;
 	struct Exception *cause;
+	ExceptionBacktrace *backtrace;
 } Exception;
 
 Exception *Exception_new(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, char *message, bool own_message);
@@ -402,6 +427,7 @@ Exception *Exception_newd(const ExceptionType *type, Exception *cause, const cha
 Exception *Exception_newf(const ExceptionType *type, Exception *cause, const char *file, int line, const char *fn, const char *format, ...);
 void Exception_destroy(Exception *self);
 void Exception_destroy_and_free(Exception *self);
+void Exception_add_backtrace(Exception *exception);
 void Exception_dump(Exception *self, FILE *file, ExceptionDumpDetail detail);
 
 //
@@ -579,6 +605,7 @@ void exceptional_dump_fn(FILE *file, const char *fn, const char *tag, const char
 char *exceptional_bstring_to_string(bstring string_b);
 char *exceptional_strdup(const char *string);
 char *exceptional_sprintf(size_t max_size, const char *format, va_list args);
+char *exceptional_escape_spaces(const char *string);
 
 // SimCList
 
