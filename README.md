@@ -44,7 +44,7 @@ The build script is in "wscript" (standard Python code).
 
 By default, the build will enable complete exception stack traces using libc's
 [backtrace](http://www.gnu.org/software/libc/manual/html_node/Backtraces.html).
-On platforms that do not support backtrace, you may disable this by remove the
+On platforms that do not support backtrace, you may disable this by removing the
 `EXCEPTIONAL_BACKTRACE` flag. Also note that for backtraces to work best you want to
 
 * enable debug symbols (compile with `-g`) for showing function names,
